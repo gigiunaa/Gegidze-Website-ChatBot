@@ -225,9 +225,14 @@
       position: fixed;
       bottom: 24px;
       right: 24px;
-      display: flex;
+
+      display: inline-flex;
       align-items: center;
       gap: 12px;
+
+      width: auto;
+      height: auto;
+
       z-index: 9999;
     }
 
@@ -269,11 +274,6 @@
       75% {
         opacity: 0
       }
-    }
-
-    /* Wrapper არ უნდა იჭერდეს click-ს */
-    #chat-wrapper {
-      pointer-events: none;
     }
 
     /* მხოლოდ launcher უნდა იყოს clickable */
@@ -326,6 +326,8 @@
 
     document.getElementById("geg-chat-launcher").onclick = () => {
       document.getElementById("geg-chat-window").classList.add("open");
+      document.getElementById("chat-wrapper").style.display = "none";
+
 
       // ❗️მხოლოდ launcher და ტექსტი დამალე
       document.getElementById("geg-chat-launcher").style.display = "none";
@@ -341,6 +343,8 @@
       // launcher და ტექსტი ისევ გამოჩნდეს
       document.getElementById("geg-chat-launcher").style.display = "flex";
       document.getElementById("side-typing").style.display = "block";
+      document.getElementById("chat-wrapper").style.display = "flex";
+
 
       // state reset
       state = "start";
