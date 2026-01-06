@@ -40,24 +40,36 @@
     #geg-chat-window {
       position: fixed;
       bottom: 96px;
-      /* 24px + launcher(56px) + 16px gap */
       right: 24px;
       width: 380px;
       max-height: calc(100vh - 140px);
-      display: none;
+
+      display: flex;
       flex-direction: column;
       overflow: hidden;
+
       background: #fff;
       border-radius: var(--radius-lg);
       border: 1px solid rgba(0, 0, 0, 0.06);
-      z-index: 10000;
       box-shadow:
         0 12px 24px rgba(0, 0, 0, 0.12),
         0 2px 6px rgba(0, 0, 0, 0.06);
+
+      z-index: 10000;
+
+      /* ⭐ მთავარი */
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transform: scale(0.9);
+      transition: opacity .25s ease, transform .25s ease, visibility .25s;
     }
 
     #geg-chat-window.open {
-      display: flex
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
+      transform: scale(1);
     }
 
     #geg-chat-header {
@@ -284,11 +296,6 @@
     /* side ტექსტი არ უნდა იჭერდეს click-ს */
     #side-typing {
       pointer-events: none;
-    }
-
-    /* chat window შიგნით ყველაფერი clickable */
-    #geg-chat-window {
-      pointer-events: auto;
     }
   </style>
 </head>
@@ -583,10 +590,31 @@
       Please write your question, and a manager will assist you 👇
     </div>
 
-    <textarea id="supportInput"
-      placeholder="Type your message here..."
-      style="width:100%;padding:14px;border-radius:14px;border:1px solid #e5e7eb;
-             margin-bottom:10px;resize:none;height:90px"></textarea>
+<textarea
+  id="supportInput"
+  placeholder="Type your message here..."
+  style="
+    width:100%;
+    box-sizing:border-box;
+    padding:10px 12px;
+    border-radius:14px;
+    border:1px solid #e5e7eb;
+    margin-bottom:10px;
+    resize:none;
+
+    height:44px;
+    max-height:120px;
+
+    overflow-y:hidden;
+
+    font-size:14px;
+    line-height:1.4;
+  "
+></textarea>
+
+
+
+
 
     <div class="btn btn-primary" onclick="submitSupport()">Send</div>
   `;
@@ -877,6 +905,14 @@ Message:
       if (document.getElementById("chatInput")) {
         submitInput();
       }
+    });
+
+    document.addEventListener("input", (e) => {
+      if (e.target.id !== "supportInput") return;
+
+      const el = e.target;
+      el.style.height = "auto";
+      el.style.height = Math.min(el.scrollHeight, 120) + "px";
     });
 
 
