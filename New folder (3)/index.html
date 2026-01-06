@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Gegidze Chat</title>
+
+  <style>
+    :root {
+      --dark: #1f2128;
+      --bubble: #f4f5f7;
+      --border: #e5e7eb;
+      --muted: #6b7280;
+      --radius-lg: 20px;
+      --radius-md: 14px;
+    }
+
+    body {
+      margin: 0;
+      font-family: Inter, Arial, sans-serif
+    }
+
+    /* Launcher */
+    #geg-chat-launcher {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: var(--dark);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 9999;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, .25)
+    }
+
+    #geg-chat-launcher img {
+      width: 26px
+    }
+
+    #geg-chat-window {
+      position: fixed;
+      bottom: 96px;
+      right: 24px;
+      width: 380px;
+
+      max-height: calc(100vh - 140px);
+      /* 👈 მთავარი */
+      display: none;
+      flex-direction: column;
+      overflow: hidden;
+
+      background: #fff;
+      border-radius: var(--radius-lg);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, .2);
+      z-index: 9999;
+    }
+
+
+    #geg-chat-window.open {
+      display: flex
+    }
+
+    #geg-chat-header {
+      padding: 16px 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border)
+    }
+
+    #geg-chat-header img {
+      height: 22px
+    }
+
+    #geg-chat-close {
+      border: none;
+      background: none;
+      font-size: 18px;
+      cursor: pointer;
+      color: var(--muted)
+    }
+
+    #geg-chat-body {
+      padding: 18px;
+      overflow-y: auto
+    }
+
+    .message {
+      background: var(--bubble);
+      padding: 14px 16px;
+      border-radius: var(--radius-md);
+      font-size: 14.5px;
+      line-height: 1.45;
+      margin-bottom: 14px
+    }
+
+    .back {
+      font-size: 13.5px;
+      color: var(--muted);
+      cursor: pointer;
+      margin-bottom: 10px
+    }
+
+    .btn {
+      padding: 14px 16px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border);
+      background: #fff;
+      cursor: pointer;
+      font-size: 14.5px;
+      margin-bottom: 10px
+    }
+
+    .btn:hover {
+      background: var(--dark);
+      color: #fff;
+      border-color: var(--dark);
+    }
+
+    .btn:focus,
+    .btn:active {
+      outline: none;
+      box-shadow: none;
+    }
+
+    /* Carousel */
+    .carousel-wrapper {
+      position: relative;
+      margin-top: 8px;
+      overflow: hidden
+    }
+
+    .carousel {
+      display: flex;
+      gap: 12px;
+      overflow-x: auto;
+      scroll-behavior: smooth;
+      padding: 0 28px 6px
+    }
+
+    .carousel::-webkit-scrollbar {
+      display: none
+    }
+
+    .card {
+      min-width: 220px;
+      max-width: 220px;
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      flex-shrink: 0;
+
+      display: flex;
+      flex-direction: column
+    }
+
+    .card-image {
+      aspect-ratio: 4/3;
+      background: #f1f2f4;
+      display: flex;
+      align-items: center;
+      justify-content: center
+    }
+
+    .card-image img {
+      max-width: 100%;
+      object-fit: contain
+    }
+
+    .card-body {
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      height: 100%
+    }
+
+    .card-title {
+      font-weight: 600;
+      font-size: 14px;
+      margin-bottom: 4px
+    }
+
+    .card-desc {
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 10px
+    }
+
+    .card-body button {
+      width: 100%;
+      padding: 10px;
+      border-radius: 10px;
+      border: none;
+      background: var(--dark);
+      color: #fff;
+      cursor: pointer;
+      margin-top: auto
+    }
+
+    .arrow {
+      position: absolute;
+      top: 45%;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: rgba(0, 0, 0, .6);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 2
+    }
+
+    .arrow.left {
+      left: 6px
+    }
+
+    .arrow.right {
+      right: 6px
+    }
+
+    /* Wrapper */
+    #chat-wrapper {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      z-index: 9999
+    }
+
+    #chat-wrapper #geg-chat-launcher {
+      position: static
+    }
+
+    #chat-wrapper #side-typing {
+      position: static
+    }
+
+    #side-typing span::after {
+      content: "▍";
+      margin-left: 2px;
+      animation: blink 1s infinite
+    }
+
+    #side-typing.done span::after {
+      content: "";
+      animation: none
+    }
+
+    .card-body button {
+      pointer-events: auto;
+      position: relative;
+      z-index: 5;
+    }
+
+    @keyframes blink {
+
+      0%,
+      50%,
+      100% {
+        opacity: 1
+      }
+
+      25%,
+      75% {
+        opacity: 0
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div id="chat-wrapper">
+    <div id="geg-chat-launcher">
+      <img src="assets/gegidze logo.png">
+    </div>
+    <div id="side-typing"><span id="side-text"></span></div>
+  </div>
+
+  <div id="geg-chat-window">
+    <div id="geg-chat-header">
+      <img src="assets/gegidze-logo.png">
+      <button id="geg-chat-close">✕</button>
+    </div>
+    <div id="geg-chat-body"></div>
+  </div>
+
+  <script>
+    let state = "start";
+    let selectedService = null
+    const body = document.getElementById("geg-chat-body")
+
+    let userData = {
+      name: "",
+      email: "",
+      phone: ""
+    };
+
+    let inputStep = null;
+
+
+    document.getElementById("geg-chat-launcher").onclick = () => {
+      document.getElementById("geg-chat-window").classList.toggle("open")
+
+      // ⬇️ აქ ვმალავთ ლოგოს + ტექსტს
+      document.getElementById("chat-wrapper").style.display = "none"
+
+      render()
+    }
+
+    document.getElementById("geg-chat-close").onclick = () => {
+      document.getElementById("geg-chat-window").classList.remove("open");
+
+      // 👇 launcher + side text ისევ გამოჩნდეს
+      document.getElementById("chat-wrapper").style.display = "flex";
+
+      // 👇 state reset (ძალიან მნიშვნელოვანია)
+      state = "start";
+      selectedService = null;
+
+      userData = { name: "", email: "", phone: "" };
+      inputStep = null;
+    };
+
+
+    function render() {
+      if (state === "start") startView()
+      if (state === "services") servicesView()
+      if (state === "detail") detailView()
+    }
+
+    function startView() {
+      body.innerHTML = `
+    <div class="message">
+      Hello! 👋<br><br>
+      Welcome to <strong>Gegidze</strong>.<br>
+      A better future for your business starts here.
+    </div>
+    <div class="btn" onclick="go('services')">🚀 Services</div>
+    <div class="btn" onclick="startSupport()">🆘 Support</div>
+    <div class="btn" onclick="startJobs()">💼 Jobs & Careers</div>
+  `
+    }
+
+    function servicesView() {
+      body.innerHTML = `
+    <div class="back" onclick="go('start')">← Back</div>
+    <div class="message">Choose the service 👇</div>
+    <div class="carousel-wrapper">
+      <div class="arrow left" onclick="scrollCards(-1)">‹</div>
+      <div class="arrow right" onclick="scrollCards(1)">›</div>
+      <div class="carousel" id="cards">
+  ${card("Tax Optimization 1% IE", "Reduce your global tax legally", "1.png")}
+  ${card("0% Tax Solution", "Perfect for IT & export companies", "2.png")}
+  ${card("Company Registration", "Remote Georgian LLC", "3.png")}
+  ${card("Crypto → Fiat Conversion", "Receive & convert crypto legally", "4.png")}
+  ${card("Relocation", "Visa, residence & banking support", "5.png")}
+  ${card("Special Tax Regimes", "Virtual Zone & IC regimes", "6.png")}
+      </div>
+    </div>
+  `
+    }
+
+    function detailView() {
+      let content = "";
+
+      if (selectedService === "Special Tax Regimes") {
+        content = `
+      <div class="message"><strong>Special Tax Regimes</strong></div>
+
+      <div class="message">
+        • Full compliance<br>
+        • No VAT globally<br>
+        • Multicurrency banking<br>
+        • No relocation required
+      </div>
+
+      <div class="message">
+        🧳 Setup: 999 EUR<br>
+        📅 Monthly: from 99 EUR<br>
+        🗓 Annual option available
+      </div>
+    `;
+      }
+
+      if (selectedService === "Relocation") {
+        content = `
+      <div class="message"><strong>Relocation</strong></div>
+
+      <div class="message">
+        • Visa & residence permits<br>
+        • Post-arrival support<br>
+        • Property & address assistance<br>
+        • Bank account setup<br>
+        • Business incorporation support
+      </div>
+
+      <div class="message">
+        🧳 Packages available<br>
+        ▫️ Basic — 500 EUR<br>
+        ▫️ Standard — 1,000 EUR<br>
+        ▫️ Premium — 2,000 EUR
+      </div>
+    `;
+      }
+
+      if (selectedService === "Crypto → Fiat Conversion") {
+        content = `
+      <div class="message"><strong>Crypto → Fiat Conversion</strong></div>
+
+      <div class="message">
+        • Full compliance<br>
+        • No VAT globally<br>
+        • Multilingual support<br>
+        • 100% remote setup
+      </div>
+    `;
+      }
+
+      if (selectedService === "Company Registration") {
+        content = `
+      <div class="message"><strong>Company Registration</strong></div>
+
+      <div class="message">
+        • LLC setup in under 1 business day<br>
+        • Fully remote, no relocation<br>
+        • One of the world’s most business-friendly country
+      </div>
+
+      <div class="message">
+        🧳 Setup: 799 EUR
+      </div>
+    `;
+      }
+
+      if (selectedService === "0% Tax Solution") {
+        content = `
+      <div class="message"><strong>0% Tax Solution</strong></div>
+
+      <div class="message">
+        • 0% corporate tax<br>
+        • 0% VAT on exports<br>
+        • Fully remote setup
+      </div>
+
+      <div class="message">
+        🧳 Setup fee: 1,499 EUR
+      </div>
+    `;
+      }
+
+      if (selectedService === "Tax Optimization 1% IE") {
+        content = `
+      <div class="message"><strong>Tax Optimization 1% IE</strong></div>
+
+      <div class="message">
+        • Legal & compliant setup<br>
+        • Fully remote, non-resident friendly<br>
+        • Registration in 3 business days
+      </div>
+
+      <div class="message">
+        🧳 Setup: 999 EUR<br>
+        📅 Monthly: from 99 EUR<br>
+        🗓 Annual option available
+      </div>
+    `;
+      }
+
+      body.innerHTML = `
+    <div class="back" onclick="go('services')">← Back</div>
+
+    ${content}
+
+    <div class="message">
+      🚀 Don't miss out! A quick call can clear everything up! 📞✨
+    </div>
+
+    <div class="btn" onclick="bookCall()">📅 Book a Call</div>
+    <div class="btn" onclick="talkToSales()">💬 Talk to sales</div>
+    <div class="btn" onclick="startLeadFlow()">📞 Leave your number</div>
+  `;
+    }
+
+
+    function card(title, desc, img) {
+      return `
+    <div class="card">
+      <div class="card-image"><img src="assets/${img}"></div>
+      <div class="card-body">
+        <div class="card-title">${title}</div>
+        <div class="card-desc">${desc}</div>
+        <button onclick="selectService('${title}')">Select</button>
+      </div>
+    </div>
+  `
+    }
+
+    function bookCall() {
+      const url = "https://book.gegidze.com/#/253580000000051034?utm_source=gegidze_meta&utm_medium=meta_organic&utm_campaign=chatbot_book_call&utm_content=chatbot_message";
+      window.open(url, "_blank");
+    }
+    function openCareers() {
+      window.open(
+        "https://team-up.zohorecruit.com/jobs/Careers",
+        "_blank"
+      );
+    }
+    function openHiringChat() {
+      window.open(
+        "https://m.me/webuildteam?ref=w48485851",
+        "_blank"
+      );
+    }
+
+    function talkToSales() {
+      if (!selectedService) return;
+
+      const phone = "995591966517";
+      const message = `👋 Hi, I would like to learn more about ${selectedService}`;
+      const encodedMessage = encodeURIComponent(message);
+
+      const url = `https://api.whatsapp.com/send?phone=${phone}&text=${encodedMessage}`;
+      window.open(url, "_blank");
+    }
+
+    function startLeadFlow() {
+      inputStep = "name";
+
+      body.innerHTML = `
+    <div class="back" onclick="detailView()">← Back</div>
+
+    <div class="message">
+      Please provide your first and last name 👇
+    </div>
+
+    <input id="chatInput" placeholder="Your full name"
+      style="width:100%;padding:14px;border-radius:14px;border:1px solid #e5e7eb;margin-bottom:10px" />
+
+    <div class="btn btn-primary" onclick="submitInput()">Continue</div>
+  `;
+    }
+
+    function startSupport() {
+      state = "support";
+      body.innerHTML = `
+    <div class="back" onclick="go('start')">← Back</div>
+
+    <div class="message">
+      🆘 Support<br><br>
+      Please write your question, and a manager will assist you 👇
+    </div>
+
+    <textarea id="supportInput"
+      placeholder="Type your message here..."
+      style="width:100%;padding:14px;border-radius:14px;border:1px solid #e5e7eb;
+             margin-bottom:10px;resize:none;height:90px"></textarea>
+
+    <div class="btn btn-primary" onclick="submitSupport()">Send</div>
+  `;
+    }
+
+    function startJobs() {
+      body.innerHTML = `
+    <div class="back" onclick="go('start')">← Back</div>
+
+    <div class="message">
+      💼 <strong>Jobs & Careers</strong><br><br>
+      To view all job openings and career opportunities,  
+      please visit our official careers page using the link below 👇
+    </div>
+
+    <div class="btn" onclick="openCareers()">
+      🌐 View Job Openings
+    </div>
+
+    <div class="message">
+      Prefer to talk directly with our hiring team?<br>
+      You can also reach us via chat 👇
+    </div>
+
+    <div class="btn" onclick="openHiringChat()">
+      💬 Chat with Hiring Team
+    </div>
+  `;
+    }
+
+
+
+    function submitSupport() {
+      const inputEl = document.getElementById("supportInput");
+      if (!inputEl) return;
+
+      const message = inputEl.value.trim();
+      if (!message) return;
+
+      const isWorkingHours = checkWorkingHours();
+
+      if (isWorkingHours) {
+        body.innerHTML = `
+    <div class="message">
+      ✅ Thank you! Your message has been forwarded to the team.<br>
+      A manager will reply shortly.
+    </div>
+
+    <div class="btn btn-primary" onclick="go('start')">
+      🏠 Back to menu
+    </div>
+  `;
+
+
+
+        // 👉 აქ მერე დაუკავშირებ:
+        // - ManyChat
+        // - Zoho Desk
+        // - Slack / Make webhook
+        console.log("SUPPORT (WORKING HOURS):", message);
+        const chatText = `
+🆘 NEW SUPPORT MESSAGE
+
+Source: Website Chatbot
+Page: ${window.location.href}
+Time: ${new Date().toLocaleString()}
+
+Message:
+"${message}"
+`.trim();
+
+        sendToGoogleChat(chatText);
+
+
+      } else {
+
+        const chatText = `
+🌙 NEW SUPPORT MESSAGE (OFFLINE)
+
+Source: Website Chatbot
+Page: ${window.location.href}
+Time: ${new Date().toLocaleString()}
+
+Message:
+"${message}"
+`.trim();
+
+        sendToGoogleChat(chatText);
+
+        body.innerHTML = `
+    <div class="message">
+      🌙 Thanks! Your request has been received.<br><br>
+      Our team is currently offline.<br>
+      We’ll contact you on the next business day.
+    </div>
+
+    <div class="btn btn-primary" onclick="go('start')">
+      🏠 Back to menu
+    </div>
+  `;
+      }
+
+
+    }
+
+    function checkWorkingHours() {
+      const now = new Date();
+
+      // UTC +4
+      const utcHour = now.getUTCHours() + 4;
+      const hour = utcHour >= 24 ? utcHour - 24 : utcHour;
+
+      const day = now.getUTCDay(); // 0=Sun, 1=Mon ...
+
+      const isWeekday = day >= 1 && day <= 5; // Mon–Fri
+      const isWorkingHour = hour >= 10 && hour < 18;
+
+      return isWeekday && isWorkingHour;
+    }
+
+
+    function submitInput() {
+      const inputEl = document.getElementById("chatInput");
+      if (!inputEl) return;
+
+      const input = inputEl.value.trim();
+      if (!input) return;
+
+      // NAME
+      if (inputStep === "name") {
+        userData.name = input;
+        inputStep = "email";
+
+        body.innerHTML = `
+      <div class="message">Thanks, ${userData.name} 😊</div>
+      <div class="message">Please share your email address 📧</div>
+
+      <input id="chatInput" type="email" placeholder="Your email"
+        style="width:100%;padding:14px;border-radius:14px;border:1px solid #e5e7eb;margin-bottom:10px" />
+
+      <div class="btn btn-primary" onclick="submitInput()">Continue</div>
+    `;
+        return;
+      }
+
+      // EMAIL
+      if (inputStep === "email") {
+        if (!isValidEmail(input)) {
+          body.insertAdjacentHTML(
+            "beforeend",
+            `<div class="message" style="color:#b91c1c">
+          ❌ Please enter a valid email address
+        </div>`
+          );
+          return;
+        }
+
+        userData.email = input;
+        inputStep = "phone";
+
+        body.innerHTML = `
+      <div class="message">Almost done 👍</div>
+      <div class="message">Leave your contact number 📞</div>
+
+      <input id="chatInput" type="tel" placeholder="+49176..."
+        style="width:100%;padding:14px;border-radius:14px;border:1px solid #e5e7eb;margin-bottom:10px" />
+
+      <div class="btn btn-primary" onclick="submitInput()">Finish</div>
+    `;
+        return;
+      }
+
+      // PHONE
+      if (inputStep === "phone") {
+        if (!isValidPhone(input)) {
+          body.insertAdjacentHTML(
+            "beforeend",
+            `<div class="message" style="color:#b91c1c">
+          ❌ Please enter a valid phone number (international format allowed)
+        </div>`
+          );
+          return;
+        }
+
+        userData.phone = input;
+        inputStep = null;
+        finishLead();
+      }
+    }
+
+    function sendToGoogleChat(text) {
+      fetch(
+        "https://chat.googleapis.com/v1/spaces/AAQA20VtzgA/messages?key=AIzaSyDdI0hCZtE6vySjMm-WEfRq3CPzqKqqsHI&token=xhmKczNJ-fos41neiulNcDg8KaAqwacx3Ka1z6lgCS4",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            text: text
+          })
+        }
+      ).catch(err => {
+        console.error("Google Chat send failed:", err);
+      });
+    }
+
+
+    function finishLead() {
+      // 🔹 Full name → First / Last
+      const fullName = userData.name.trim();
+      const nameParts = fullName.split(" ");
+      const firstName = nameParts.shift();
+      const lastName = nameParts.join(" ") || firstName;
+
+      // 🔹 გაუმჯობესებული Description
+      const description = `
+Service: ${selectedService}
+Source: Website Chatbot
+Page: ${window.location.href}
+`.trim();
+
+      // 🔹 Zoho Web-to-Lead URL
+      const zohoUrl =
+        "https://crm.zoho.eu/crm/WebToLeadForm" +
+        "?xnQsjsdp=db650644014bb11329f205febf89d7422d54b257c399a6f294467fe3fffbebbf" +
+        "&zc_gad=" +
+        "&xmIwtLD=5a6b9880afead51ccd9d00b91c4bfd523600aeb1ec8185f6bfe7c861d886beec5e4da71e0da42e8c1a1b4d5c7ede5c70" +
+        "&actionType=TGVhZHM%3D" +
+        "&returnURL=null" +
+        `&First%20Name=${encodeURIComponent(firstName)}` +
+        `&Last%20Name=${encodeURIComponent(lastName)}` +
+        `&Email=${encodeURIComponent(userData.email)}` +
+        `&Phone=${encodeURIComponent(userData.phone)}` +
+        "&Lead%20Source=Website%20Chatbot" +
+        `&Description=${encodeURIComponent(description)}` +
+        "&aG9uZXlwb3Q=";
+
+      // 🔹 Background submit (no redirect)
+      const img = new Image();
+      img.src = zohoUrl;
+
+      // 🔹 UI confirmation
+      body.innerHTML = `
+    <div class="message">
+      ✅ Thank you! Your details have been received.
+    </div>
+
+    <div class="message">
+      👤 ${userData.name}<br>
+      📧 ${userData.email}<br>
+      📞 ${userData.phone}
+    </div>
+
+    <div class="message">
+      Our team will contact you shortly 🚀
+    </div>
+  `;
+    }
+
+
+
+    function selectService(name) { selectedService = name; state = "detail"; render() }
+    function go(to) { state = to; render() }
+    function scrollCards(dir) { document.getElementById("cards").scrollLeft += dir * 232 }
+
+    /* Side typing */
+    const sideText = "Hi there 👋"
+    const sideEl = document.getElementById("side-text")
+    let i = 0
+    function typeSide() {
+      if (i < sideText.length) {
+        sideEl.textContent += sideText[i++]
+        setTimeout(typeSide, 55)
+      } else {
+        document.getElementById("side-typing").classList.add("done")
+      }
+    }
+    setTimeout(typeSide, 700)
+
+    function isValidEmail(email) {
+      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    }
+
+    // საერთაშორისო ნომერი (+, ციფრები, 7–15 სიგრძე)
+    function isValidPhone(phone) {
+      return /^\+?[0-9\s\-]{7,15}$/.test(phone);
+    }
+
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key !== "Enter") return;
+
+      if (document.getElementById("supportInput")) {
+        e.preventDefault();
+        submitSupport();
+        return;
+      }
+
+      if (document.getElementById("chatInput")) {
+        submitInput();
+      }
+    });
+
+
+  </script>
+
+</body>
+
+</html>
