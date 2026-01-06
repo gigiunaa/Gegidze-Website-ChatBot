@@ -22,9 +22,6 @@
 
     /* Launcher */
     #geg-chat-launcher {
-      position: fixed;
-      bottom: 24px;
-      right: 24px;
       width: 56px;
       height: 56px;
       border-radius: 50%;
@@ -33,32 +30,29 @@
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      z-index: 9999;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, .25)
+      box-shadow: 0 8px 24px rgba(0, 0, 0, .25);
     }
 
     #geg-chat-launcher img {
-      width: 26px
+      width: 26px;
     }
+
 
     #geg-chat-window {
       position: fixed;
       bottom: 96px;
+      /* 24px + launcher(56px) + 16px gap */
       right: 24px;
       width: 380px;
-
       max-height: calc(100vh - 140px);
-      /* 👈 მთავარი */
       display: none;
       flex-direction: column;
       overflow: hidden;
-
       background: #fff;
       border-radius: var(--radius-lg);
       box-shadow: 0 20px 60px rgba(0, 0, 0, .2);
-      z-index: 9999;
+      z-index: 10000;
     }
-
 
     #geg-chat-window.open {
       display: flex
@@ -225,7 +219,6 @@
       right: 6px
     }
 
-    /* Wrapper */
     #chat-wrapper {
       position: fixed;
       bottom: 24px;
@@ -233,8 +226,9 @@
       display: flex;
       align-items: center;
       gap: 12px;
-      z-index: 9999
+      z-index: 9999;
     }
+
 
     #chat-wrapper #geg-chat-launcher {
       position: static
@@ -309,27 +303,30 @@
 
 
     document.getElementById("geg-chat-launcher").onclick = () => {
-      document.getElementById("geg-chat-window").classList.toggle("open")
+      document.getElementById("geg-chat-window").classList.add("open");
 
-      // ⬇️ აქ ვმალავთ ლოგოს + ტექსტს
-      document.getElementById("chat-wrapper").style.display = "none"
+      // ❗️მხოლოდ launcher და ტექსტი დამალე
+      document.getElementById("geg-chat-launcher").style.display = "none";
+      document.getElementById("side-typing").style.display = "none";
 
-      render()
-    }
+      render();
+    };
+
 
     document.getElementById("geg-chat-close").onclick = () => {
       document.getElementById("geg-chat-window").classList.remove("open");
 
-      // 👇 launcher + side text ისევ გამოჩნდეს
-      document.getElementById("chat-wrapper").style.display = "flex";
+      // launcher და ტექსტი ისევ გამოჩნდეს
+      document.getElementById("geg-chat-launcher").style.display = "flex";
+      document.getElementById("side-typing").style.display = "block";
 
-      // 👇 state reset (ძალიან მნიშვნელოვანია)
+      // state reset
       state = "start";
       selectedService = null;
-
       userData = { name: "", email: "", phone: "" };
       inputStep = null;
     };
+
 
 
     function render() {
@@ -754,47 +751,47 @@ Message:
       }
     }
 
-function sendToGoogleChat(text) {
-  fetch("https://gegidze-chat-api.onrender.com/support", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      message: text,
-      page: window.location.href
-    })
-  }).catch(() => {
-    console.error("Support send failed");
-  });
-}
+    function sendToGoogleChat(text) {
+      fetch("https://gegidze-chat-api.onrender.com/support", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          message: text,
+          page: window.location.href
+        })
+      }).catch(() => {
+        console.error("Support send failed");
+      });
+    }
 
 
 
- function finishLead() {
-  const fullName = userData.name.trim();
-  const nameParts = fullName.split(" ");
-  const firstName = nameParts.shift();
-  const lastName = nameParts.join(" ") || firstName;
+    function finishLead() {
+      const fullName = userData.name.trim();
+      const nameParts = fullName.split(" ");
+      const firstName = nameParts.shift();
+      const lastName = nameParts.join(" ") || firstName;
 
-  fetch("https://gegidze-chat-api.onrender.com/lead", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      firstName,
-      lastName,
-      email: userData.email,
-      phone: userData.phone,
-      service: selectedService,
-      page: window.location.href
-    })
-  }).catch(() => {
-    console.error("Lead submit failed");
-  });
+      fetch("https://gegidze-chat-api.onrender.com/lead", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          firstName,
+          lastName,
+          email: userData.email,
+          phone: userData.phone,
+          service: selectedService,
+          page: window.location.href
+        })
+      }).catch(() => {
+        console.error("Lead submit failed");
+      });
 
-  body.innerHTML = `
+      body.innerHTML = `
     <div class="message">
       ✅ Thank you! Your details have been received.
     </div>
@@ -809,7 +806,7 @@ function sendToGoogleChat(text) {
       Our team will contact you shortly 🚀
     </div>
   `;
-}
+    }
 
 
 
