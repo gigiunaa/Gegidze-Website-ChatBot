@@ -754,60 +754,47 @@ Message:
       }
     }
 
-    function sendToGoogleChat(text) {
-      fetch(
-        "https://chat.googleapis.com/v1/spaces/AAQA20VtzgA/messages?key=AIzaSyDdI0hCZtE6vySjMm-WEfRq3CPzqKqqsHI&token=xhmKczNJ-fos41neiulNcDg8KaAqwacx3Ka1z6lgCS4",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            text: text
-          })
-        }
-      ).catch(err => {
-        console.error("Google Chat send failed:", err);
-      });
-    }
+function sendToGoogleChat(text) {
+  fetch("https://gegidze-chat-api.onrender.com/support", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      message: text,
+      page: window.location.href
+    })
+  }).catch(() => {
+    console.error("Support send failed");
+  });
+}
 
 
-    function finishLead() {
-      // 🔹 Full name → First / Last
-      const fullName = userData.name.trim();
-      const nameParts = fullName.split(" ");
-      const firstName = nameParts.shift();
-      const lastName = nameParts.join(" ") || firstName;
 
-      // 🔹 გაუმჯობესებული Description
-      const description = `
-Service: ${selectedService}
-Source: Website Chatbot
-Page: ${window.location.href}
-`.trim();
+ function finishLead() {
+  const fullName = userData.name.trim();
+  const nameParts = fullName.split(" ");
+  const firstName = nameParts.shift();
+  const lastName = nameParts.join(" ") || firstName;
 
-      // 🔹 Zoho Web-to-Lead URL
-      const zohoUrl =
-        "https://crm.zoho.eu/crm/WebToLeadForm" +
-        "?xnQsjsdp=db650644014bb11329f205febf89d7422d54b257c399a6f294467fe3fffbebbf" +
-        "&zc_gad=" +
-        "&xmIwtLD=5a6b9880afead51ccd9d00b91c4bfd523600aeb1ec8185f6bfe7c861d886beec5e4da71e0da42e8c1a1b4d5c7ede5c70" +
-        "&actionType=TGVhZHM%3D" +
-        "&returnURL=null" +
-        `&First%20Name=${encodeURIComponent(firstName)}` +
-        `&Last%20Name=${encodeURIComponent(lastName)}` +
-        `&Email=${encodeURIComponent(userData.email)}` +
-        `&Phone=${encodeURIComponent(userData.phone)}` +
-        "&Lead%20Source=Website%20Chatbot" +
-        `&Description=${encodeURIComponent(description)}` +
-        "&aG9uZXlwb3Q=";
+  fetch("https://gegidze-chat-api.onrender.com/lead", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      firstName,
+      lastName,
+      email: userData.email,
+      phone: userData.phone,
+      service: selectedService,
+      page: window.location.href
+    })
+  }).catch(() => {
+    console.error("Lead submit failed");
+  });
 
-      // 🔹 Background submit (no redirect)
-      const img = new Image();
-      img.src = zohoUrl;
-
-      // 🔹 UI confirmation
-      body.innerHTML = `
+  body.innerHTML = `
     <div class="message">
       ✅ Thank you! Your details have been received.
     </div>
@@ -822,7 +809,8 @@ Page: ${window.location.href}
       Our team will contact you shortly 🚀
     </div>
   `;
-    }
+}
+
 
 
 
