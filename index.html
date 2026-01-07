@@ -39,12 +39,12 @@
 
     #geg-chat-window {
       position: fixed;
-      bottom: 96px;
+      bottom: 35px;
       right: 24px;
       width: 380px;
       max-height: calc(100vh - 140px);
 
-      display: flex;
+      display: none;
       flex-direction: column;
       overflow: hidden;
 
@@ -57,20 +57,20 @@
 
       z-index: 10000;
 
-      /* ⭐ მთავარი */
       opacity: 0;
-      visibility: hidden;
-      pointer-events: none;
-      transform: scale(0.9);
-      transition: opacity .25s ease, transform .25s ease, visibility .25s;
+      /* ⭐ აუცილებელია */
+      transform: scale(0.95);
+      /* ⭐ აუცილებელია */
+
+      transition: opacity .25s ease, transform .25s ease;
     }
 
     #geg-chat-window.open {
+      display: flex;
       opacity: 1;
-      visibility: visible;
-      pointer-events: auto;
       transform: scale(1);
     }
+
 
     #geg-chat-header {
       padding: 16px 18px;
